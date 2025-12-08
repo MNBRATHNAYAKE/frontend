@@ -7,11 +7,11 @@ import axios from "axios";
 function App() {
   const [monitors, setMonitors] = useState([]);
   
-  // --- NEW: State for adding monitors ---
+  // State for adding monitors
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
-  // --------------------------------------
 
+  // State for UI & Subscriptions
   const [email, setEmail] = useState("");
   const [subCount, setSubCount] = useState(0);
   const [subMessage, setSubMessage] = useState("");
@@ -21,7 +21,7 @@ function App() {
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-  // ... (Keep existing toggleFullscreen and fetchData functions the same) ...
+  // Toggle Fullscreen
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -30,6 +30,7 @@ function App() {
     }
   };
 
+  // Fetch Data
   const fetchData = useCallback(async () => {
     try {
       const [monRes, subRes] = await Promise.all([
@@ -44,7 +45,7 @@ function App() {
     }
   }, [API_URL]);
 
-  // --- NEW: Function to Add Monitor ---
+  // Add Monitor Function
   const addMonitor = async () => {
     if (!newName || !newUrl) return alert("Please enter both a name and a URL");
     
@@ -61,14 +62,14 @@ function App() {
       });
       setNewName("");
       setNewUrl("");
-      fetchData(); // Refresh the grid immediately
+      fetchData(); // Refresh immediately
     } catch (err) {
       alert("Failed to add monitor. Check console.");
       console.error(err);
     }
   };
-  // ------------------------------------
 
+  // Add Subscriber Function
   const addSubscriber = async () => {
     if (!email) return;
     try {
@@ -82,12 +83,14 @@ function App() {
     setTimeout(() => setSubMessage(""), 4000);
   };
 
+  // Polling Effect
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  // Fullscreen Listener
   useEffect(() => {
     const handleFs = () => setFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handleFs);
@@ -97,6 +100,12 @@ function App() {
   return (
     <div className={`App ${fullscreen ? "fs-mode" : ""}`}>
       
+      {/* --- NEW: Import Modern Font (Outfit) --- */}
+      <style>
+        {`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');`}
+      </style>
+      {/* ---------------------------------------- */}
+
       {!fullscreen && (
         <header>
           <div className="header-top">
@@ -107,9 +116,9 @@ function App() {
             </div>
           </div>
 
-          {/* --- NEW: Add Monitor Section --- */}
+          {/* Admin Panel (Add Monitor) */}
           <div className="admin-panel">
-            <h3>Add New Monitor</h3>
+            <h3>Add New Service</h3>
             <div className="input-row">
               <input 
                 type="text" 
@@ -123,35 +132,35 @@ function App() {
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
               />
-              <button className="add-btn" onClick={addMonitor}>+ Add Service</button>
+              <button className="add-btn" onClick={addMonitor}>+ Add Monitor</button>
             </div>
           </div>
-          {/* ------------------------------- */}
 
+          {/* Controls */}
           <div className="controls">
             <button className="fs-btn" onClick={toggleFullscreen}>
-              ⛶ Fullscreen
+              ⛶ Fullscreen View
             </button>
           </div>
 
-          {/* (Keep subscriber section same as before) */}
+          {/* Subscribers */}
           <div className="subscriber-section">
             <div className="sub-input-group">
               <input
                 type="email"
-                placeholder="alert@example.com"
+                placeholder="Enter email for alerts"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <button onClick={addSubscriber}>Get Alerts</button>
+              <button onClick={addSubscriber}>Subscribe</button>
             </div>
-            {subMessage && <span className="sub-msg">{subMessage}</span>}
-            <small className="sub-count">{subCount} active subscribers</small>
+            {subMessage && <span style={{display:'block', marginTop:'10px', color: '#10b981'}}>{subMessage}</span>}
+            <small style={{display:'block', marginTop:'10px', color: '#94a3b8'}}>{subCount} active subscribers</small>
           </div>
         </header>
       )}
 
-      {/* Grid (Keep same as before) */}
+      {/* Grid Layout */}
       <div className="monitors-grid">
         {monitors.map((m) => (
           <div key={m._id} className={`monitor-card ${m.status}`}>
@@ -160,28 +169,32 @@ function App() {
               <h3>{m.name}</h3>
               <a href={m.url} target="_blank" rel="noreferrer" className="monitor-link">{m.url}</a>
             </div>
+            
             <div className="mini-chart">
                <UptimeChart history={m.history} /> 
             </div>
+            
             <button className="details-btn" onClick={() => setSelectedMonitor(m)}>
-              Analytics &rarr;
+              View Analytics
             </button>
           </div>
         ))}
       </div>
 
-      {/* Modal (Keep same as before) */}
+      {/* Modal Popup */}
       {selectedMonitor && (
         <div className="modal-overlay" onClick={() => setSelectedMonitor(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedMonitor(null)}>×</button>
+            
             <div className="modal-header">
               <h2>{selectedMonitor.name}</h2>
               <span className={`status-pill ${selectedMonitor.status}`}>
                 {selectedMonitor.status.toUpperCase()}
               </span>
+              <a href={selectedMonitor.url} target="_blank" rel="noreferrer" className="modal-url">{selectedMonitor.url}</a>
             </div>
-            <p className="modal-url">{selectedMonitor.url}</p>
+            
             <div className="chart-wrapper">
               <UptimeChart history={selectedMonitor.history} detailed />
             </div>
