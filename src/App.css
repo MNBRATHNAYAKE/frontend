@@ -209,7 +209,7 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
 }
 .details-btn:hover { background: rgba(255,255,255,0.08); }
 
-/* --- Modal (Sticky Close + Scrollable) --- */
+/* --- Modal --- */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -263,51 +263,35 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
 ::-webkit-scrollbar-thumb:hover { background: #555; }
 
 /* ========================================= */
-/* ⚡ COMPACT FULLSCREEN MODE ⚡           */
+/* ⚡ BALANCED FULLSCREEN MODE ⚡          */
 /* ========================================= */
 
 .fs-mode {
-  padding: 10px !important;
+  padding: 20px !important;
   max-width: 100%;
 }
 
 .fs-mode .monitors-grid {
-  /* Force cards to be small (200px wide) to pack them in */
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  /* 280px is the sweet spot: Compact but readable */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .fs-mode .monitor-card {
-  /* Reduce padding drastically for compact look */
-  padding: 12px;
-  border-radius: 12px;
-  min-height: auto;
+  padding: 20px; /* Slightly less padding than normal mode */
+  border-radius: 16px;
 }
 
+/* We do NOT shrink the fonts anymore, keeping readability high */
 .fs-mode .monitor-details h3 {
-  font-size: 0.95rem; /* Smaller Title */
-  margin-bottom: 2px;
+  font-size: 1.1rem;
 }
 
 .fs-mode .monitor-link {
-  font-size: 0.75rem; /* Tiny URL */
-  margin-bottom: 8px;
-}
-
-.fs-mode .status-badge {
-  top: 10px;
-  right: 10px;
-  padding: 2px 6px;
-  font-size: 0.6rem;
+  font-size: 0.85rem;
 }
 
 .fs-mode .mini-chart {
-  margin-bottom: 8px;
-  height: 35px; /* Short graph */
-}
-
-.fs-mode .details-btn {
-  padding: 6px;
-  font-size: 0.8rem;
-  border-radius: 6px;
+  height: 45px; /* Slightly shorter graph */
+  margin-bottom: 10px;
 }
