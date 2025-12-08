@@ -5,9 +5,10 @@ import Chart from "react-apexcharts";
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 // Helper: Generates consistent time-series data
-const generateChartData = (history, hours) => {
+// CHANGED: 'durationMinutes' argument instead of hours
+const generateChartData = (history, durationMinutes) => {
   const now = new Date();
-  const cutoff = new Date(now.getTime() - hours * 60 * 60 * 1000);
+  const cutoff = new Date(now.getTime() - durationMinutes * 60 * 1000); // Convert minutes to ms
   const sortedHistory = [...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   // Filter points strictly inside the window
@@ -57,19 +58,22 @@ const generateChartData = (history, hours) => {
 };
 
 const UptimeChart = ({ history = [], detailed = false }) => {
-  const [range, setRange] = useState("24h");
-  const [showAllHistory, setShowAllHistory] = useState(false); // Controls the "Show More" dropdown
+  // CHANGED: Default range is now "20m"
+  const [range, setRange] = useState("20m");
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const chartId = useMemo(() => `chart-${Math.random().toString(36).substring(2, 9)}`, []);
 
   // --- 1. Mini Sparkline Mode (Dashboard Grid) ---
   if (!detailed) {
-    const uniqueData = generateChartData(history, 24);
+    // CHANGED: Generate Last 20 Minutes (20) instead of 24h
+    const uniqueData = generateChartData(history, 20);
     const sparkOptions = {
       chart: { type: 'line', sparkline: { enabled: true }, animations: { enabled: false } },
       stroke: { curve: 'stepline', width: 2, colors: ['#10b981'] },
       tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } },
       yaxis: { min: 0, max: 100 },
-      xaxis: { type: "datetime", min: new Date().getTime() - 24 * 60 * 60 * 1000, max: new Date().getTime() },
+      // CHANGED: X-axis spans 20 minutes
+      xaxis: { type: "datetime", min: new Date().getTime() - 20 * 60 * 1000, max: new Date().getTime() },
       colors: ['#10b981']
     };
     
@@ -87,10 +91,13 @@ const UptimeChart = ({ history = [], detailed = false }) => {
   }
 
   // --- 2. Detailed Mode (Popup Modal) ---
-  let hours = 24;
-  if (range === "48h") hours = 48;
-  if (range === "72h") hours = 72;
-  const uniqueData = generateChartData(history, hours);
+  
+  // CHANGED: Logic for new ranges (20m, 1h, 3h)
+  let minutes = 20; // Default 20m
+  if (range === "1h") minutes = 60;
+  if (range === "3h") minutes = 180;
+  
+  const uniqueData = generateChartData(history, minutes);
   const series = [{ name: "Uptime", data: uniqueData }];
 
   const chartOptions = {
@@ -111,13 +118,15 @@ const UptimeChart = ({ history = [], detailed = false }) => {
         })),
     },
     yaxis: { min: 0, max: 100, tickAmount: 1, labels: { formatter: val => (val === 100 ? "Up" : "Down"), style: { colors: "#aaa" } } },
-    xaxis: { type: "datetime", min: new Date().getTime() - hours * 60 * 60 * 1000, max: new Date().getTime(), labels: { datetimeUTC: false, style: { colors: "#ccc", fontSize: "11px" } }, tooltip: { enabled: false } },
+    // CHANGED: X-axis uses 'minutes' logic
+    xaxis: { type: "datetime", min: new Date().getTime() - minutes * 60 * 1000, max: new Date().getTime(), labels: { datetimeUTC: false, style: { colors: "#ccc", fontSize: "11px" } }, tooltip: { enabled: false } },
     grid: { borderColor: "rgba(255,255,255,0.06)", strokeDashArray: 4 },
-    tooltip: { theme: "dark", x: { format: "dd MMM HH:mm:ss" }, y: { formatter: val => (val === 100 ? "Online" : "Offline") } },
+    tooltip: { theme: "dark", x: { format: "HH:mm:ss" }, y: { formatter: val => (val === 100 ? "Online" : "Offline") } }, // Changed date format to show seconds
     legend: { show: false },
   };
 
   const downloadCSV = () => {
+    // Keep CSV export for 6 days so users don't lose data access
     const sixDaysAgo = new Date(new Date().getTime() - 6 * 24 * 60 * 60 * 1000);
     const dataToExport = history.filter(item => new Date(item.timestamp) >= sixDaysAgo).map(item => ({ Timestamp: item.timestamp, Status: item.status }));
     const csvContent = "data:text/csv;charset=utf-8," + ["Timestamp,Status", ...dataToExport.map(e => `${e.Timestamp},${e.Status}`)].join("\n");
@@ -140,9 +149,10 @@ const UptimeChart = ({ history = [], detailed = false }) => {
       {/* Controls */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, alignItems: 'center' }}>
         <select value={range} onChange={e => setRange(e.target.value)} style={{ background: "#2c2c3c", color: "#fff", border: "1px solid #444", borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: 'pointer' }}>
-          <option value="24h">Last 24 hours</option>
-          <option value="48h">Last 48 hours</option>
-          <option value="72h">Last 72 hours</option>
+          {/* CHANGED: New Options */}
+          <option value="20m">Last 20 Minutes</option>
+          <option value="1h">Last 1 Hour</option>
+          <option value="3h">Last 3 Hours</option>
         </select>
         <button onClick={downloadCSV} style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>Download Events (6 days)</button>
       </div>
