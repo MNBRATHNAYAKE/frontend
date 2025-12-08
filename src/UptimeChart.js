@@ -249,7 +249,7 @@ const UptimeChart = ({ history = [], detailed = false }) => {
             <tbody>
               {visibleEvents.map((e, i) => (
                 <tr key={i} style={{ backgroundColor: e.status === "down" ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.05)", borderBottom: '1px solid #222' }}>
-                  <td style={{ padding: "8px", color: "#ccc" }}>{new Date(e.timestamp).toLocaleString()}</td>
+                  <td style={{ padding: "8px", color: "#a31919ff" }}>{new Date(e.timestamp).toLocaleString()}</td>
                   <td style={{ padding: "8px", color: e.status === "down" ? "#ef4444" : "#10b981", fontWeight: 600, textTransform: "capitalize" }}>{e.status}</td>
                 </tr>
               ))}
