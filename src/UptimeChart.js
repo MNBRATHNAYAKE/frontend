@@ -4,24 +4,55 @@ import Chart from "react-apexcharts";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-// Helper: Generates consistent time-series data for both Sparkline and Detail views
-const generateChartData = (history, hours) => {
+const UptimeChart = ({ history = [], detailed = false }) => {
+  const [range, setRange] = useState("24h");
+  const chartId = useMemo(() => `chart-${Math.random().toString(36).substring(2, 9)}`, []);
+
+  // --- 1. Mini Sparkline Mode (Dashboard Grid) ---
+  if (!detailed) {
+    const sparkOptions = {
+      chart: { type: 'line', sparkline: { enabled: true }, animations: { enabled: false } },
+      stroke: { curve: 'stepline', width: 2, colors: ['#10b981'] },
+      tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } },
+      yaxis: { min: 0, max: 100 }
+    };
+    
+    // Safety check for empty history
+    if (!history || history.length === 0) return <div style={{height: 50, background: 'rgba(255,255,255,0.05)'}} />;
+
+    const simpleData = history.slice(-30).map(h => ({
+      x: new Date(h.timestamp).getTime(),
+      y: h.status === 'up' ? 100 : 0
+    }));
+
+    return (
+      <div style={{ width: '100%', height: '100%' }}>
+        <Chart options={sparkOptions} series={[{ data: simpleData }]} type="line" height={50} width="100%" />
+      </div>
+    );
+  }
+
+  // --- 2. Detailed Mode (Popup Modal) ---
   const now = new Date();
+  
+  // Calculate Cutoff Time
+  let hours = 24;
+  if (range === "48h") hours = 48;
+  if (range === "72h") hours = 72;
   const cutoff = new Date(now.getTime() - hours * 60 * 60 * 1000);
 
-  // 1. Sort history
+  // --- Graph Logic: "Carry Over" Status ---
   const sortedHistory = [...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-  // 2. Filter points strictly inside the window
+  // Filter points strictly inside the window
   let insideWindow = sortedHistory.filter(item => {
     const t = new Date(item.timestamp).getTime();
     return t >= cutoff.getTime() && t <= now.getTime();
   });
 
-  // 3. Find status immediately BEFORE the window starts to fill the gap
+  // Find status immediately BEFORE the window starts to fill the gap
   const previousPoint = sortedHistory.reverse().find(item => new Date(item.timestamp).getTime() < cutoff.getTime());
   
-  // 4. Inject "Start" point at cutoff time (Critical for full-width lines)
   if (previousPoint) {
     insideWindow.unshift({
       status: previousPoint.status,
@@ -29,11 +60,10 @@ const generateChartData = (history, hours) => {
       fake: true
     });
   } else if (insideWindow.length === 0 && sortedHistory.length > 0) {
-     // If no previous data, assume the earliest known status was valid at start
      insideWindow.push({ ...sortedHistory[0], timestamp: cutoff.toISOString() });
   }
 
-  // 5. Map to x/y coordinates
+  // Prepare Data for ApexCharts
   let chartData = insideWindow.map(item => ({
     x: new Date(item.timestamp).getTime(),
     y: clamp(item.status === 'up' ? 100 : 0, 0, 100),
@@ -41,7 +71,7 @@ const generateChartData = (history, hours) => {
     timestamp: item.timestamp
   }));
 
-  // 6. Add Step Logic (Square Wave)
+  // Add Step Logic (Square Wave)
   const stepped = [];
   for (let i = 0; i < chartData.length; i++) {
     const curr = chartData[i];
@@ -58,7 +88,7 @@ const generateChartData = (history, hours) => {
     stepped.push(curr);
   }
 
-  // 7. Stretch line to the right edge (NOW)
+  // Stretch line to the right edge (NOW)
   if (stepped.length > 0) {
     const last = stepped[stepped.length - 1];
     if (last.x < now.getTime()) {
@@ -71,60 +101,7 @@ const generateChartData = (history, hours) => {
     }
   }
 
-  // Deduplicate and return
-  return Array.from(new Map(stepped.map(d => [d.x, d])).values()).sort((a, b) => a.x - b.x);
-};
-
-const UptimeChart = ({ history = [], detailed = false }) => {
-  const [range, setRange] = useState("24h");
-  const [showAllHistory, setShowAllHistory] = useState(false); // <--- NEW STATE
-  const chartId = useMemo(() => `chart-${Math.random().toString(36).substring(2, 9)}`, []);
-
-  // --- 1. Mini Sparkline Mode (Dashboard Grid) ---
-  if (!detailed) {
-    // Generate Last 24h data specifically for Sparkline
-    const uniqueData = generateChartData(history, 24);
-
-    const sparkOptions = {
-      chart: { 
-        type: 'line', 
-        sparkline: { enabled: true }, 
-        animations: { enabled: false } 
-      },
-      stroke: { curve: 'stepline', width: 2, colors: ['#10b981'] },
-      tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } },
-      yaxis: { min: 0, max: 100 },
-      xaxis: {
-        type: "datetime",
-        min: new Date().getTime() - 24 * 60 * 60 * 1000, 
-        max: new Date().getTime()
-      },
-      colors: ['#10b981'] 
-    };
-    
-    // Check if current status is DOWN to change line color
-    const isDown = history.length > 0 && history[history.length - 1].status === 'down';
-    if (isDown) sparkOptions.colors = ['#ef4444'];
-    if (isDown) sparkOptions.stroke.colors = ['#ef4444'];
-
-    if (!history || history.length === 0) return <div style={{height: 50, background: 'rgba(255,255,255,0.05)', borderRadius: 4}} />;
-
-    return (
-      <div style={{ width: '100%', height: '100%' }}>
-        <Chart options={sparkOptions} series={[{ data: uniqueData }]} type="line" height={50} width="100%" />
-      </div>
-    );
-  }
-
-  // --- 2. Detailed Mode (Popup Modal) ---
-  
-  // Calculate Hours based on selection
-  let hours = 24;
-  if (range === "48h") hours = 48;
-  if (range === "72h") hours = 72;
-
-  // Use the same helper function for consistent logic
-  const uniqueData = generateChartData(history, hours);
+  let uniqueData = Array.from(new Map(stepped.map(d => [d.x, d])).values()).sort((a, b) => a.x - b.x);
 
   const series = [{ name: "Uptime", data: uniqueData }];
 
@@ -160,8 +137,8 @@ const UptimeChart = ({ history = [], detailed = false }) => {
     },
     xaxis: {
       type: "datetime",
-      min: new Date().getTime() - hours * 60 * 60 * 1000,
-      max: new Date().getTime(),
+      min: cutoff.getTime(),
+      max: now.getTime(),
       labels: { datetimeUTC: false, style: { colors: "#ccc", fontSize: "11px" } },
       tooltip: { enabled: false }
     },
@@ -170,8 +147,9 @@ const UptimeChart = ({ history = [], detailed = false }) => {
     legend: { show: false },
   };
 
+  // --- Download Function ---
   const downloadCSV = () => {
-    const sixDaysAgo = new Date(new Date().getTime() - 6 * 24 * 60 * 60 * 1000);
+    const sixDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
     const dataToExport = history
       .filter(item => new Date(item.timestamp) >= sixDaysAgo)
       .map(item => ({ Timestamp: item.timestamp, Status: item.status }));
@@ -189,24 +167,28 @@ const UptimeChart = ({ history = [], detailed = false }) => {
     document.body.removeChild(link);
   };
 
-  // --- NEW LOGIC: Filter Events for "Show More" ---
+  // Events Table Data
+  const sixDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
   const recentEvents = history
-    .filter(item => new Date(item.timestamp) >= new Date().getTime() - 6 * 24 * 60 * 60 * 1000)
+    .filter(item => new Date(item.timestamp) >= sixDaysAgo)
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-  // If NOT showing all, only show top 5
-  const visibleEvents = showAllHistory ? recentEvents : recentEvents.slice(0, 5);
 
   return (
     <div style={{ width: "100%" }}>
-      {/* Controls */}
+      
+      {/* --- Controls Section (Restored) --- */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, alignItems: 'center' }}>
         <select
           value={range}
           onChange={e => setRange(e.target.value)}
           style={{
-            background: "#2c2c3c", color: "#fff", border: "1px solid #444", borderRadius: 6,
-            padding: "6px 10px", fontSize: 13, cursor: 'pointer'
+            background: "#2c2c3c",
+            color: "#fff",
+            border: "1px solid #444",
+            borderRadius: 6,
+            padding: "6px 10px",
+            fontSize: 13,
+            cursor: 'pointer'
           }}
         >
           <option value="24h">Last 24 hours</option>
@@ -214,15 +196,24 @@ const UptimeChart = ({ history = [], detailed = false }) => {
           <option value="72h">Last 72 hours</option>
         </select>
 
-        <button onClick={downloadCSV} style={{
-            background: "#10b981", color: "#fff", border: "none", borderRadius: 6,
-            padding: "6px 12px", fontSize: 13, cursor: "pointer", fontWeight: "bold"
-        }}>
+        <button
+          onClick={downloadCSV}
+          style={{
+            background: "#10b981", // Matching green theme
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            padding: "6px 12px",
+            fontSize: 13,
+            cursor: "pointer",
+            fontWeight: "bold"
+          }}
+        >
           Download Events (6 days)
         </button>
       </div>
 
-      {/* Main Chart */}
+      {/* --- Chart Section --- */}
       <div style={{ backgroundColor: "rgba(0,0,0,0.2)", borderRadius: 10, padding: 8 }}>
         {uniqueData.length > 0 ? (
            <Chart options={chartOptions} series={series} type="line" height={260} />
@@ -233,12 +224,10 @@ const UptimeChart = ({ history = [], detailed = false }) => {
         )}
       </div>
 
-      {/* Events Table (Collapsible) */}
+      {/* --- Events Table Section --- */}
       <div style={{ marginTop: 20, backgroundColor: "rgba(0,0,0,0.2)", borderRadius: 10, padding: 10 }}>
         <h4 style={{ margin: "0 0 10px 0", color: "#10b981", fontSize: "0.95rem" }}>Events (Past 6 Days)</h4>
-        
-        {/* Remove max-height and overflow since we are limiting rows now */}
-        <div style={{ width: "100%" }}>
+        <div style={{ maxHeight: 200, overflowY: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "#ddd" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #333", textAlign: "left" }}>
@@ -247,37 +236,38 @@ const UptimeChart = ({ history = [], detailed = false }) => {
               </tr>
             </thead>
             <tbody>
-              {visibleEvents.map((e, i) => (
-                <tr key={i} style={{ backgroundColor: e.status === "down" ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.05)", borderBottom: '1px solid #222' }}>
-                  <td style={{ padding: "8px", color: "#a31919ff" }}>{new Date(e.timestamp).toLocaleString()}</td>
-                  <td style={{ padding: "8px", color: e.status === "down" ? "#ef4444" : "#10b981", fontWeight: 600, textTransform: "capitalize" }}>{e.status}</td>
+              {recentEvents.map((e, i) => (
+                <tr
+                  key={i}
+                  style={{
+                    backgroundColor: e.status === "down" ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.05)",
+                    borderBottom: '1px solid #222'
+                  }}
+                >
+                  <td style={{ padding: "8px", color: "#ccc" }}>
+                    {new Date(e.timestamp).toLocaleString()}
+                  </td>
+                  <td
+                    style={{
+                      padding: "8px",
+                      color: e.status === "down" ? "#ef4444" : "#10b981",
+                      fontWeight: 600,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {e.status}
+                  </td>
                 </tr>
               ))}
               {recentEvents.length === 0 && (
-                <tr><td colSpan="2" style={{ textAlign: "center", padding: "15px", color: "#666" }}>No events found in the last 6 days.</td></tr>
+                <tr>
+                  <td colSpan="2" style={{ textAlign: "center", padding: "15px", color: "#666" }}>
+                    No events found in the last 6 days.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
-          
-          {/* Show More / Show Less Button */}
-          {recentEvents.length > 5 && (
-            <button 
-              onClick={() => setShowAllHistory(!showAllHistory)}
-              style={{
-                width: "100%",
-                marginTop: "10px",
-                padding: "8px",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#ccc",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "0.85rem"
-              }}
-            >
-              {showAllHistory ? "Show Less ▲" : `Show All History (${recentEvents.length}) ▼`}
-            </button>
-          )}
         </div>
       </div>
     </div>
