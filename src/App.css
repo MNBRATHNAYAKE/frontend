@@ -1,0 +1,245 @@
+/* App.css */
+:root {
+  --bg-dark: #121420;
+  --card-bg: #1e2333;
+  --text-main: #f0f2f5;
+  --text-muted: #94a3b8;
+  --accent: #6366f1; /* Indigo */
+  --success: #10b981; /* Emerald */
+  --danger: #ef4444;  /* Red */
+  --warning: #f59e0b; /* Amber */
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+.App {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+/* Header & Live Indicator */
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+h1 { margin: 0; font-size: 2rem; letter-spacing: -0.5px; }
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--success);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Subscription Box */
+.subscriber-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3rem;
+}
+
+.sub-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  background: var(--card-bg);
+  border: 1px solid #333;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  width: 250px;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+button:hover { opacity: 0.9; }
+
+/* Grid System */
+.monitors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.monitor-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.monitor-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,0.1);
+}
+
+.monitor-card.up { border-top: 4px solid var(--success); }
+.monitor-card.down { border-top: 4px solid var(--danger); }
+
+.status-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.up .status-badge { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+.down .status-badge { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+.monitor-details h3 { margin: 0 0 5px 0; }
+.monitor-link { color: var(--text-muted); font-size: 0.9rem; text-decoration: none; }
+.mini-chart { margin: 15px 0; height: 50px; }
+
+.details-btn {
+  background: transparent;
+  border: 1px solid #444;
+  width: 100%;
+  margin-top: auto;
+}
+.details-btn:hover { background: #2a2f45; }
+
+/* Modal / Popup */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #1a1d2d;
+  width: 90%;
+  max-width: 800px;
+  padding: 2rem;
+  border-radius: 16px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  width: auto;
+  font-size: 1.5rem;
+}
+
+.status-pill.up { color: var(--success); }
+.status-pill.down { color: var(--danger); }
+
+/* Fullscreen Mode */
+.fs-mode .monitors-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+/* --- Add this to App.css --- */
+
+.admin-panel {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 0 auto 2rem auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-panel h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.input-row input {
+  background: #121420;
+  border: 1px solid #333;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.input-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.add-btn {
+  background: var(--success); /* Green button for adding */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+  background: #059669; /* Darker green on hover */
+  transform: translateY(-1px);
+}
