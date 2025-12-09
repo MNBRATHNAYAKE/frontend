@@ -69,6 +69,19 @@ function App() {
     }
   };
 
+  // --- NEW: Delete Monitor Function ---
+  const deleteMonitor = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+    try {
+      await axios.delete(`${API_URL}/monitors/${id}`);
+      fetchData(); // Refresh grid immediately
+    } catch (err) {
+      alert("Failed to delete monitor.");
+      console.error(err);
+    }
+  };
+  // ------------------------------------
+
   // Add Subscriber Function
   const addSubscriber = async () => {
     if (!email) return;
@@ -100,11 +113,7 @@ function App() {
   return (
     <div className={`App ${fullscreen ? "fs-mode" : ""}`}>
       
-      {/* --- NEW: Import Modern Font (Outfit) --- */}
-      <style>
-        {`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');`}
-      </style>
-      {/* ---------------------------------------- */}
+      {/* (Note: Font import is now handled in App.css) */}
 
       {!fullscreen && (
         <header>
@@ -132,7 +141,7 @@ function App() {
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
               />
-              <button className="add-btn" onClick={addMonitor}>+ Add Monitor</button>
+              <button className="add-btn" onClick={addMonitor}>+ Add</button>
             </div>
           </div>
 
@@ -154,7 +163,7 @@ function App() {
               />
               <button onClick={addSubscriber}>Subscribe</button>
             </div>
-            {subMessage && <span style={{display:'block', marginTop:'10px', color: '#10b981'}}>{subMessage}</span>}
+            {subMessage && <span style={{display:'block', marginTop:'10px', color: '#34d399'}}>{subMessage}</span>}
             <small style={{display:'block', marginTop:'10px', color: '#94a3b8'}}>{subCount} active subscribers</small>
           </div>
         </header>
@@ -164,7 +173,18 @@ function App() {
       <div className="monitors-grid">
         {monitors.map((m) => (
           <div key={m._id} className={`monitor-card ${m.status}`}>
+            
+            {/* --- NEW: Delete Button (Top Right) --- */}
+            <button 
+              className="delete-card-btn" 
+              onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}
+              title="Delete Monitor"
+            >
+              🗑️
+            </button>
+
             <div className="status-badge">{m.status}</div>
+            
             <div className="monitor-details">
               <h3>{m.name}</h3>
               <a href={m.url} target="_blank" rel="noreferrer" className="monitor-link">{m.url}</a>
@@ -188,7 +208,7 @@ function App() {
             <button className="close-btn" onClick={() => setSelectedMonitor(null)}>×</button>
             
             <div className="modal-header">
-              <h2>{selectedMonitor.name}</h2>
+              <h2 style={{margin:0}}>{selectedMonitor.name}</h2>
               <span className={`status-pill ${selectedMonitor.status}`}>
                 {selectedMonitor.status.toUpperCase()}
               </span>
