@@ -1,5 +1,5 @@
 // App.js
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import "./App.css";
 import UptimeChart from "./UptimeChart";
 import axios from "axios";
@@ -19,7 +19,67 @@ function App() {
   const [selectedMonitor, setSelectedMonitor] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // --- NEW: Alert System State ---
+  const prevStatusRef = useRef({}); // Remembers the previous status
+  const [permission, setPermission] = useState('default');
+  // -------------------------------
+
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+  // --- NEW: 1. Request Notification Permission on Load ---
+  useEffect(() => {
+    if ('Notification' in window) {
+      Notification.requestPermission().then(perm => setPermission(perm));
+    }
+  }, []);
+
+  // --- NEW: 2. Alert Logic (Runs whenever 'monitors' updates) ---
+  useEffect(() => {
+    if (!monitors || monitors.length === 0) return;
+
+    monitors.forEach(monitor => {
+      // Use _id because that is what MongoDB uses
+      const id = monitor._id; 
+      const currentStatus = monitor.status; // "up" or "down"
+      const prev = prevStatusRef.current[id];
+
+      // A. If it WAS 'up' and now is 'down' -> BAD SOUND
+      if (prev && prev === 'up' && currentStatus === 'down') {
+         triggerAlert(monitor.name, 'down');
+      }
+
+      // B. If it WAS 'down' and now is 'up' -> GOOD SOUND
+      if (prev && prev === 'down' && currentStatus === 'up') {
+         triggerAlert(monitor.name, 'up');
+      }
+
+      // Update memory for next check
+      prevStatusRef.current[id] = currentStatus;
+    });
+  }, [monitors]);
+
+  // --- NEW: 3. Helper to play sound & show popup ---
+  const triggerAlert = (siteName, type) => {
+    // 1. Play Sound
+    const soundFile = type === 'down' 
+      ? 'https://www.soundjay.com/buttons/beep-03.mp3' 
+      : 'https://www.soundjay.com/buttons/button-09.mp3';
+    
+    const audio = new Audio(soundFile);
+    audio.play().catch(e => console.log("Audio blocked until user interacts"));
+
+    // 2. Show Notification (if allowed)
+    if (permission === 'granted') {
+      const title = type === 'down' ? `🚨 ${siteName} is DOWN` : `✅ ${siteName} is UP`;
+      new Notification(title, {
+          body: `Status changed at ${new Date().toLocaleTimeString()}`,
+          icon: '/logo192.png', // Optional: Ensure this image exists in public folder
+          silent: true // We play our own sound above
+      });
+    }
+  };
+  // ---------------------------------------------------------
+
 
   // Toggle Fullscreen
   const toggleFullscreen = () => {
@@ -69,7 +129,7 @@ function App() {
     }
   };
 
-  // --- NEW: Delete Monitor Function ---
+  // Delete Monitor Function
   const deleteMonitor = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
     try {
@@ -80,7 +140,6 @@ function App() {
       console.error(err);
     }
   };
-  // ------------------------------------
 
   // Add Subscriber Function
   const addSubscriber = async () => {
@@ -113,8 +172,6 @@ function App() {
   return (
     <div className={`App ${fullscreen ? "fs-mode" : ""}`}>
       
-      {/* (Note: Font import is now handled in App.css) */}
-
       {!fullscreen && (
         <header>
           <div className="header-top">
@@ -174,7 +231,6 @@ function App() {
         {monitors.map((m) => (
           <div key={m._id} className={`monitor-card ${m.status}`}>
             
-            {/* --- NEW: Delete Button (Top Right) --- */}
             <button 
               className="delete-card-btn" 
               onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}
