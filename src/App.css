@@ -33,7 +33,7 @@ body {
   transition: all 0.3s ease;
 }
 
-/* --- Header Section --- */
+/* Header Section */
 .header-top {
   text-align: center;
   margin-bottom: 3rem;
@@ -81,7 +81,7 @@ h1 {
   100% { transform: scale(0.95); opacity: 1; }
 }
 
-/* --- Admin Panel --- */
+/* Admin Panel */
 .admin-panel {
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border);
@@ -149,7 +149,7 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
   border-bottom: 1px solid var(--border);
 }
 
-/* --- Grid Layout (Standard View) --- */
+/* Grid Layout */
 .monitors-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -176,10 +176,12 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
 .monitor-card.up { border-top: 4px solid var(--success); }
 .monitor-card.down { border-top: 4px solid var(--danger); }
 
+/* --- UPDATED BADGE & DELETE BUTTON --- */
+
 .status-badge {
   position: absolute;
   top: 20px;
-  right: 20px;
+  left: 20px; /* MOVED TO LEFT */
   font-size: 0.75rem;
   font-weight: 700;
   padding: 6px 12px;
@@ -187,10 +189,34 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+.delete-card-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.6;
+  transition: all 0.2s;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.delete-card-btn:hover {
+  opacity: 1;
+  color: var(--danger);
+  background: rgba(251, 113, 133, 0.1);
+  transform: scale(1.1);
+}
+
 .up .status-badge { background: rgba(52, 211, 153, 0.15); color: var(--success); }
 .down .status-badge { background: rgba(251, 113, 133, 0.15); color: var(--danger); }
 
-.monitor-details h3 { margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 600; }
+.monitor-details h3 { margin: 25px 0 6px 0; font-size: 1.25rem; font-weight: 600; }
 .monitor-link { color: var(--text-muted); font-size: 0.9rem; text-decoration: none; display: block; margin-bottom: 15px; }
 
 .mini-chart { margin-bottom: 15px; }
@@ -209,7 +235,7 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
 }
 .details-btn:hover { background: rgba(255,255,255,0.08); }
 
-/* --- Modal --- */
+/* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -262,27 +288,22 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
 ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #555; }
 
-/* ========================================= */
-/* ⚡ BALANCED FULLSCREEN MODE ⚡          */
-/* ========================================= */
-
+/* Fullscreen Mode */
 .fs-mode {
   padding: 20px !important;
   max-width: 100%;
 }
 
 .fs-mode .monitors-grid {
-  /* 280px is the sweet spot: Compact but readable */
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
 }
 
 .fs-mode .monitor-card {
-  padding: 20px; /* Slightly less padding than normal mode */
+  padding: 20px;
   border-radius: 16px;
 }
 
-/* We do NOT shrink the fonts anymore, keeping readability high */
 .fs-mode .monitor-details h3 {
   font-size: 1.1rem;
 }
@@ -292,6 +313,6 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
 }
 
 .fs-mode .mini-chart {
-  height: 45px; /* Slightly shorter graph */
+  height: 45px;
   margin-bottom: 10px;
 }
