@@ -154,7 +154,7 @@ const UptimeChart = ({ history = [], detailed = false }) => {
           <option value="1h">Last 1 Hour</option>
           <option value="3h">Last 3 Hours</option>
         </select>
-        <button onClick={downloadCSV} style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>Download Events (6 days)</button>
+        <button onClick={downloadCSV} style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 10, cursor: "pointer", fontWeight: "bold" }}>Download Events (6 days)</button>
       </div>
 
       {/* Main Chart */}
