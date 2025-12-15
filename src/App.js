@@ -218,7 +218,7 @@ function App() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <button onClick={addSubscriber}>Subscribe</button>
+              <button className="add-btn" onClick={addSubscriber}>Subscribe</button>
             </div>
             {subMessage && <span style={{display:'block', marginTop:'10px', color: '#34d399'}}>{subMessage}</span>}
             <small style={{display:'block', marginTop:'10px', color: '#94a3b8'}}>{subCount} active subscribers</small>
