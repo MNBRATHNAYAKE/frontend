@@ -316,3 +316,94 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
   height: 45px;
   margin-bottom: 10px;
 }
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+   (Add this to the very bottom of App.css)
+   ========================================= */
+
+@media (max-width: 768px) {
+
+  /* 1. Global Layout: Less padding to save space */
+  .App {
+    padding: 20px 15px;
+  }
+
+  h1 {
+    font-size: 2rem; /* Smaller title */
+  }
+
+  /* 2. Admin & Inputs: Stack them vertically */
+  .admin-panel {
+    padding: 20px;
+    width: auto;
+  }
+
+  .input-row {
+    flex-direction: column; /* Stack input on top of button */
+    gap: 10px;
+  }
+
+  .input-row input, 
+  .input-row .add-btn {
+    width: 100%; /* Full width for easier tapping */
+    margin: 0;
+  }
+
+  /* 3. Subscriber Section: Stack input and button */
+  .sub-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sub-input-group input,
+  .sub-input-group button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px; /* Consistent styling */
+  }
+  
+  .sub-input-group button {
+    background: white;
+    color: black;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* 4. The Grid: Force Single Column */
+  .monitors-grid {
+    grid-template-columns: 1fr; /* 1 card per row */
+    gap: 15px;
+  }
+
+  /* 5. Monitor Cards */
+  .monitor-card {
+    padding: 20px;
+  }
+  
+  /* Make the delete button easier to hit */
+  .delete-card-btn {
+    opacity: 1; 
+    padding: 8px;
+    top: 10px; 
+    right: 10px;
+  }
+
+  /* 6. Modal Popup: Fit to screen */
+  .modal-content {
+    width: 95%;        /* Almost full width */
+    max-height: 80vh;  /* Avoid cutting off on small screens */
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.2rem; /* Smaller header in modal */
+  }
+
+  .chart-wrapper {
+    overflow-x: auto; /* scroll horizontally if chart is compressed */
+  }
+}
