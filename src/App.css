@@ -318,92 +318,105 @@ input:focus { outline: none; border-color: var(--primary); background: rgba(0,0,
 }
 
 /* =========================================
-   MOBILE RESPONSIVENESS
-   (Add this to the very bottom of App.css)
+   MOBILE RESPONSIVENESS (FIXED)
+   Add this to the very bottom of App.css
    ========================================= */
 
 @media (max-width: 768px) {
 
-  /* 1. Global Layout: Less padding to save space */
+  /* 1. Global Layout: Breathing room */
   .App {
-    padding: 20px 15px;
+    padding: 20px 15px; /* More side padding */
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   h1 {
-    font-size: 2rem; /* Smaller title */
+    font-size: 2.2rem; /* Make title slightly smaller */
+    margin-bottom: 10px;
   }
-
-  /* 2. Admin & Inputs: Stack them vertically */
+  
+  /* 2. Admin Panel (The "Add New Service" Box) */
   .admin-panel {
     padding: 20px;
-    width: auto;
+    width: 100%;
+    box-sizing: border-box; /* Prevents box from being wider than screen */
+    margin-bottom: 30px;
   }
 
+  /* Fix the stacking of inputs */
   .input-row {
-    flex-direction: column; /* Stack input on top of button */
-    gap: 10px;
+    display: flex;
+    flex-direction: column; /* Stack vertically */
+    gap: 15px; /* Add space between Name, URL, and Button */
+    width: 100%;
   }
 
-  .input-row input, 
-  .input-row .add-btn {
-    width: 100%; /* Full width for easier tapping */
+  .input-row input {
+    width: 100%; /* Force full width */
     margin: 0;
+    box-sizing: border-box; /* Ensure padding doesn't break width */
   }
 
-  /* 3. Subscriber Section: Stack input and button */
+  .add-btn {
+    width: 100%;
+    padding: 14px; /* Taller button for easier tapping */
+    margin-top: 5px;
+  }
+
+  /* 3. Controls: Hide Fullscreen button on mobile (It's usually useless on phones) */
+  .controls .fs-btn {
+    display: none; 
+  }
+
+  /* 4. Subscriber Section */
+  .subscriber-section {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 10px; /* Prevent touching edges */
+  }
+
   .sub-input-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
   }
 
   .sub-input-group input,
   .sub-input-group button {
     width: 100%;
-    padding: 12px;
-    border-radius: 12px; /* Consistent styling */
-  }
-  
-  .sub-input-group button {
-    background: white;
-    color: black;
-    border: none;
-    font-weight: 700;
-    cursor: pointer;
+    box-sizing: border-box;
+    height: 50px; /* Consistent height */
   }
 
-  /* 4. The Grid: Force Single Column */
+  /* 5. Monitor Cards (The Grid) */
   .monitors-grid {
-    grid-template-columns: 1fr; /* 1 card per row */
-    gap: 15px;
+    display: grid;
+    grid-template-columns: 1fr; /* Force single column */
+    gap: 20px;
+    width: 100%;
   }
 
-  /* 5. Monitor Cards */
   .monitor-card {
     padding: 20px;
   }
-  
-  /* Make the delete button easier to hit */
+
+  /* Adjust Delete Button position for mobile */
   .delete-card-btn {
-    opacity: 1; 
-    padding: 8px;
-    top: 10px; 
-    right: 10px;
+    opacity: 1; /* Always visible */
+    background: rgba(255, 255, 255, 0.05); /* Slight background to see it better */
+    width: 35px;
+    height: 35px;
+    top: 15px;
+    right: 15px;
   }
 
-  /* 6. Modal Popup: Fit to screen */
+  /* 6. Modal Popup Fixes */
   .modal-content {
-    width: 95%;        /* Almost full width */
-    max-height: 80vh;  /* Avoid cutting off on small screens */
+    width: 95%;
+    max-height: 80vh;
     padding: 20px;
-    margin: 10px;
-  }
-  
-  .modal-header h2 {
-    font-size: 1.2rem; /* Smaller header in modal */
-  }
-
-  .chart-wrapper {
-    overflow-x: auto; /* scroll horizontally if chart is compressed */
+    margin: 0 auto;
   }
 }
