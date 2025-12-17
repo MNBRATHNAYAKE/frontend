@@ -236,7 +236,7 @@ function App() {
               onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}
               title="Delete Monitor"
             >
-              &#xe5cd
+              c:\Users\mnuwa\Downloads\close.png
             </button>
 
             <div className="status-badge">{m.status}</div>
