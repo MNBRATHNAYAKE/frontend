@@ -11,86 +11,72 @@ function App() {
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
 
-  // State for UI & Subscriptions
+  // State for Subscribers
   const [email, setEmail] = useState("");
-  const [subCount, setSubCount] = useState(0);
+  const [subscribers, setSubscribers] = useState([]); // List of actual emails
   const [subMessage, setSubMessage] = useState("");
+  const [showSubModal, setShowSubModal] = useState(false); // Toggle Manager
+
+  // UI State
   const [fullscreen, setFullscreen] = useState(false);
   const [selectedMonitor, setSelectedMonitor] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // --- NEW: Alert System State ---
-  const prevStatusRef = useRef({}); // Remembers the previous status
+  // Alert System
+  const prevStatusRef = useRef({});
   const [permission, setPermission] = useState('default');
-  // -------------------------------
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-  // --- NEW: 1. Request Notification Permission on Load ---
+  // 1. Request Notification Permission
   useEffect(() => {
     if ('Notification' in window) {
       Notification.requestPermission().then(perm => setPermission(perm));
     }
   }, []);
 
-  // --- NEW: 2. Alert Logic (Runs whenever 'monitors' updates) ---
+  // 2. Alert Logic
   useEffect(() => {
     if (!monitors || monitors.length === 0) return;
 
     monitors.forEach(monitor => {
-      // Use _id because that is what MongoDB uses
       const id = monitor._id; 
-      const currentStatus = monitor.status; // "up" or "down"
+      const currentStatus = monitor.status; 
       const prev = prevStatusRef.current[id];
 
-      // A. If it WAS 'up' and now is 'down' -> BAD SOUND
       if (prev && prev === 'up' && currentStatus === 'down') {
          triggerAlert(monitor.name, 'down');
       }
-
-      // B. If it WAS 'down' and now is 'up' -> GOOD SOUND
       if (prev && prev === 'down' && currentStatus === 'up') {
          triggerAlert(monitor.name, 'up');
       }
-
-      // Update memory for next check
       prevStatusRef.current[id] = currentStatus;
     });
   }, [monitors]);
 
-  // --- NEW: 3. Helper to play sound & show popup ---
+  // 3. Helper to play sound
   const triggerAlert = (siteName, type) => {
-    // 1. Play Sound
     const soundFile = type === 'down' 
       ? 'https://assets.mixkit.co/active_storage/sfx/2867/2867-preview.mp3' 
       : 'https://www.soundjay.com/buttons/button-09.mp3';
     
     const audio = new Audio(soundFile);
-    audio.play().catch(e => console.log("Audio blocked until user interacts"));
+    audio.play().catch(e => console.log("Audio blocked"));
 
-    // 2. Show Notification (if allowed)
     if (permission === 'granted') {
-      const title = type === 'down' ? `🚨 ${siteName} is DOWN` : `✅ ${siteName} is UP`;
-      new Notification(title, {
+      new Notification(type === 'down' ? `🚨 ${siteName} is DOWN` : `✅ ${siteName} is UP`, {
           body: `Status changed at ${new Date().toLocaleTimeString()}`,
-          icon: '/logo192.png', // Optional: Ensure this image exists in public folder
-          silent: true // We play our own sound above
+          silent: true 
       });
     }
   };
-  // ---------------------------------------------------------
 
-
-  // Toggle Fullscreen
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
   };
 
-  // Fetch Data
+  // Fetch Data (Monitors + Subscribers List)
   const fetchData = useCallback(async () => {
     try {
       const [monRes, subRes] = await Promise.all([
@@ -98,71 +84,71 @@ function App() {
         axios.get(`${API_URL}/subscribers`)
       ]);
       setMonitors(monRes.data);
-      setSubCount(subRes.data.count);
+      setSubscribers(subRes.data); // Store full list
       setLastUpdated(new Date());
     } catch (err) {
       console.error("Fetch error:", err);
     }
   }, [API_URL]);
 
-  // Add Monitor Function
+  // Add Monitor
   const addMonitor = async () => {
     if (!newName || !newUrl) return alert("Please enter both a name and a URL");
-    
-    // Basic URL validation
     let formattedUrl = newUrl;
-    if (!/^https?:\/\//i.test(formattedUrl)) {
-      formattedUrl = 'https://' + formattedUrl;
-    }
+    if (!/^https?:\/\//i.test(formattedUrl)) formattedUrl = 'https://' + formattedUrl;
 
     try {
-      await axios.post(`${API_URL}/monitors`, { 
-        name: newName, 
-        url: formattedUrl 
-      });
+      await axios.post(`${API_URL}/monitors`, { name: newName, url: formattedUrl });
       setNewName("");
       setNewUrl("");
-      fetchData(); // Refresh immediately
+      fetchData(); 
     } catch (err) {
-      alert("Failed to add monitor. Check console.");
-      console.error(err);
+      alert("Failed to add monitor.");
     }
   };
 
-  // Delete Monitor Function
+  // Delete Monitor
   const deleteMonitor = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete "${name}"?`)) return;
     try {
       await axios.delete(`${API_URL}/monitors/${id}`);
-      fetchData(); // Refresh grid immediately
+      fetchData(); 
     } catch (err) {
-      alert("Failed to delete monitor.");
-      console.error(err);
+      alert("Failed to delete.");
     }
   };
 
-  // Add Subscriber Function
+  // Add Subscriber
   const addSubscriber = async () => {
     if (!email) return;
     try {
       await axios.post(`${API_URL}/subscribers`, { email });
       setEmail("");
-      setSubMessage("✅ Subscribed successfully!");
+      setSubMessage("✅ Subscribed!");
       fetchData();
     } catch (err) {
-      setSubMessage("❌ Error subscribing.");
+      setSubMessage("❌ Error.");
     }
     setTimeout(() => setSubMessage(""), 4000);
   };
 
-  // Polling Effect
+  // Delete Subscriber (NEW)
+  const deleteSubscriber = async (emailToDelete) => {
+    if(!window.confirm(`Remove ${emailToDelete} from alerts?`)) return;
+    try {
+        await axios.delete(`${API_URL}/subscribers`, { data: { email: emailToDelete } });
+        fetchData();
+    } catch(err) {
+        alert("Failed to remove subscriber");
+    }
+  };
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // Fullscreen Listener
   useEffect(() => {
     const handleFs = () => setFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handleFs);
@@ -182,34 +168,21 @@ function App() {
             </div>
           </div>
 
-          {/* Admin Panel (Add Monitor) */}
+          {/* Admin Panel */}
           <div className="admin-panel">
             <h3>Add New Service</h3>
             <div className="input-row">
-              <input 
-                type="text" 
-                placeholder="Name (e.g. Google)" 
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
-              <input 
-                type="text" 
-                placeholder="URL (e.g. google.com)" 
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-              />
+              <input type="text" placeholder="Name (e.g. Google)" value={newName} onChange={(e) => setNewName(e.target.value)} />
+              <input type="text" placeholder="URL (e.g. google.com)" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
               <button className="add-btn" onClick={addMonitor}>+ Add</button>
             </div>
           </div>
 
-          {/* Controls */}
           <div className="controls">
-            <button className="fs-btn" onClick={toggleFullscreen}>
-              ⛶ Fullscreen View
-            </button>
+            <button className="fs-btn" onClick={toggleFullscreen}>⛶ Fullscreen</button>
           </div>
 
-          {/* Subscribers */}
+          {/* Subscriber Section */}
           <div className="subscriber-section">
             <div className="sub-input-group">
               <input
@@ -219,9 +192,17 @@ function App() {
                 onChange={(e) => setEmail(e.target.value)}
               />
               <button className="add-btn" onClick={addSubscriber}>Subscribe</button>
+              
+              {/* Manage Button */}
+              <button 
+                className="add-btn" 
+                style={{backgroundColor: '#64748b', marginLeft:'5px'}}
+                onClick={() => setShowSubModal(true)}
+              >
+                Manage ({subscribers.length})
+              </button>
             </div>
             {subMessage && <span style={{display:'block', marginTop:'10px', color: '#34d399'}}>{subMessage}</span>}
-            <small style={{display:'block', marginTop:'10px', color: '#94a3b8'}}>{subCount} active subscribers</small>
           </div>
         </header>
       )}
@@ -230,53 +211,59 @@ function App() {
       <div className="monitors-grid">
         {monitors.map((m) => (
           <div key={m._id} className={`monitor-card ${m.status}`}>
-            
-            <button 
-              className="delete-card-btn" 
-              onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}
-              title="Delete Monitor"
-            >
-              🗑️
-            </button>
-
+            <button className="delete-card-btn" onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}>🗑️</button>
             <div className="status-badge">{m.status}</div>
-            
             <div className="monitor-details">
               <h3>{m.name}</h3>
               <a href={m.url} target="_blank" rel="noreferrer" className="monitor-link">{m.url}</a>
             </div>
-            
-            <div className="mini-chart">
-               <UptimeChart history={m.history} /> 
-            </div>
-            
-            <button className="details-btn" onClick={() => setSelectedMonitor(m)}>
-              View Analytics
-            </button>
+            <div className="mini-chart"> <UptimeChart history={m.history} /> </div>
+            <button className="details-btn" onClick={() => setSelectedMonitor(m)}>View Analytics</button>
           </div>
         ))}
       </div>
 
-      {/* Modal Popup */}
+      {/* Monitor Detail Modal */}
       {selectedMonitor && (
         <div className="modal-overlay" onClick={() => setSelectedMonitor(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedMonitor(null)}>×</button>
-            
             <div className="modal-header">
-              <h2 style={{margin:0}}>{selectedMonitor.name}</h2>
-              <span className={`status-pill ${selectedMonitor.status}`}>
-                {selectedMonitor.status.toUpperCase()}
-              </span>
-              <a href={selectedMonitor.url} target="_blank" rel="noreferrer" className="modal-url">{selectedMonitor.url}</a>
+              <h2>{selectedMonitor.name}</h2>
+              <span className={`status-pill ${selectedMonitor.status}`}>{selectedMonitor.status.toUpperCase()}</span>
             </div>
-            
-            <div className="chart-wrapper">
-              <UptimeChart history={selectedMonitor.history} detailed />
-            </div>
+            <div className="chart-wrapper"> <UptimeChart history={selectedMonitor.history} detailed /> </div>
           </div>
         </div>
       )}
+
+      {/* Subscriber Manager Modal (NEW) */}
+      {showSubModal && (
+        <div className="modal-overlay" onClick={() => setShowSubModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth:'400px'}}>
+             <button className="close-btn" onClick={() => setShowSubModal(false)}>×</button>
+             <h2>Manage Subscribers</h2>
+             <p style={{color:'#666', fontSize:'0.9rem'}}>Remove invalid emails to fix alerts.</p>
+             
+             {subscribers.length === 0 ? <p>No subscribers yet.</p> : (
+               <ul style={{listStyle:'none', padding:0, marginTop:'20px'}}>
+                 {subscribers.map(sub => (
+                   <li key={sub._id} style={{display:'flex', justifyContent:'space-between', padding:'10px', borderBottom:'1px solid #eee'}}>
+                     <span>{sub.email}</span>
+                     <button 
+                       onClick={() => deleteSubscriber(sub.email)}
+                       style={{background:'#ef4444', color:'white', border:'none', borderRadius:'4px', padding:'5px 10px', cursor:'pointer'}}
+                     >
+                       Remove
+                     </button>
+                   </li>
+                 ))}
+               </ul>
+             )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
