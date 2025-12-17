@@ -62,7 +62,7 @@ function App() {
   const triggerAlert = (siteName, type) => {
     // 1. Play Sound
     const soundFile = type === 'down' 
-      ? 'https://www.soundjay.com/buttons/beep-03.mp3' 
+      ? 'https://assets.mixkit.co/active_storage/sfx/2867/2867-preview.mp3' 
       : 'https://www.soundjay.com/buttons/button-09.mp3';
     
     const audio = new Audio(soundFile);
