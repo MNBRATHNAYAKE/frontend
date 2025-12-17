@@ -236,7 +236,7 @@ function App() {
               onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}
               title="Delete Monitor"
             >
-              🗑️
+              &#xe5cd
             </button>
 
             <div className="status-badge">{m.status}</div>
