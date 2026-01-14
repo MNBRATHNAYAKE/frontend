@@ -26,7 +26,7 @@ const LoginScreen = ({ onLogin }) => {
   return (
     <div style={styles.loginContainer}>
       <div style={styles.loginBox}>
-        <h2 style={{ marginBottom: "20px", color:"red" }}>{isRegister ? "Create Admin Account" : "Admin Login"}</h2>
+        <h2 style={{ marginBottom: "20px" }}>{isRegister ? "Create Admin Account" : "Admin Login"}</h2>
         {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
           <input 
