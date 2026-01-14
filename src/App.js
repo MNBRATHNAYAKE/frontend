@@ -338,7 +338,7 @@ const styles = {
     zIndex: 100000 // Always on top
   },
   modalContent: {
-    
+    backgroundColor: 'black',
     padding: '25px',
     borderRadius: '12px',
     width: '90%',
