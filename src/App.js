@@ -26,18 +26,33 @@ const LoginScreen = ({ onLogin }) => {
   return (
     <div style={styles.loginContainer}>
       <div style={styles.loginBox}>
-        <h2 style={{ marginBottom: "20px" }}>{isRegister ? "Create Admin Account" : "Admin Login"}</h2>
+        {/* ✅ FIX: Applied 'styles.title' to make text dark and visible */}
+        <h2 style={styles.title}>
+          {isRegister ? "Create Admin Account" : "Admin Login"}
+        </h2>
+        
         {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+        
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <input 
-            type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)} 
+            type="email" 
+            placeholder="Email" 
+            required 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
             style={styles.input}
           />
           <input 
-            type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)} 
+            type="password" 
+            placeholder="Password" 
+            required 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
             style={styles.input}
           />
-          <button type="submit" style={styles.button}>{isRegister ? "Register" : "Login"}</button>
+          <button type="submit" style={styles.button}>
+            {isRegister ? "Register" : "Login"}
+          </button>
         </form>
         <p onClick={() => setIsRegister(!isRegister)} style={styles.link}>
           {isRegister ? "Already have an account? Login" : "Need an account? Register"}
@@ -49,7 +64,6 @@ const LoginScreen = ({ onLogin }) => {
 
 // --- MAIN WEBSITE COMPONENT ---
 function App() {
-  // 🔐 Auth State
   const [token, setToken] = useState(localStorage.getItem("token"));
   
   // Dashboard State
@@ -68,18 +82,15 @@ function App() {
   const [permission, setPermission] = useState('default');
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-  // --- LOGOUT FUNCTION ---
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
   };
 
-  // --- 1. Notification Permission ---
   useEffect(() => {
     if ('Notification' in window) Notification.requestPermission().then(perm => setPermission(perm));
   }, []);
 
-  // --- 2. Alert Logic ---
   useEffect(() => {
     if (!monitors || monitors.length === 0) return;
     monitors.forEach(monitor => {
@@ -108,7 +119,6 @@ function App() {
     }
   };
 
-  // --- Fetch Data ---
   const fetchData = useCallback(async () => {
     try {
       const [monRes, subRes] = await Promise.all([
@@ -121,7 +131,6 @@ function App() {
     } catch (err) { console.error("Fetch error:", err); }
   }, [API_URL]);
 
-  // --- Poll Data (Only if Logged in) ---
   useEffect(() => {
     if (token) {
         fetchData();
@@ -130,14 +139,12 @@ function App() {
     }
   }, [fetchData, token]);
 
-  // --- Actions (Protected) ---
   const addMonitor = async () => {
     if (!newName || !newUrl) return alert("Please enter both a name and a URL");
     let formattedUrl = newUrl;
     if (!/^https?:\/\//i.test(formattedUrl)) formattedUrl = 'https://' + formattedUrl;
 
     try {
-      // 🔐 Attach Token
       await axios.post(`${API_URL}/monitors`, { name: newName, url: formattedUrl }, { headers: { 'x-auth-token': token } });
       setNewName("");
       setNewUrl("");
@@ -151,7 +158,6 @@ function App() {
   const deleteMonitor = async (id, name) => {
     if (!window.confirm(`Delete "${name}"?`)) return;
     try {
-      // 🔐 Attach Token
       await axios.delete(`${API_URL}/monitors/${id}`, { headers: { 'x-auth-token': token } });
       fetchData(); 
     } catch (err) {
@@ -190,15 +196,12 @@ function App() {
     return () => document.removeEventListener("fullscreenchange", handleFs);
   }, []);
 
-  // 🛑 RENDER LOGIN IF NO TOKEN
   if (!token) {
       return <LoginScreen onLogin={(t) => { localStorage.setItem("token", t); setToken(t); }} />;
   }
 
-  // 🟢 RENDER DASHBOARD IF LOGGED IN
   return (
     <div className={`App ${fullscreen ? "fs-mode" : ""}`}>
-      {/* Logout Button */}
       <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
 
       {!fullscreen && (
@@ -288,14 +291,74 @@ function App() {
   );
 }
 
-// --- STYLES FOR LOGIN SCREEN ---
+// --- UPDATED STYLES ---
 const styles = {
-  loginContainer: { display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#f0f2f5" },
-  loginBox: { padding: "40px", backgroundColor: "white", borderRadius: "10px", boxShadow: "0 4px 10px rgba(0,0,0,0.1)", textAlign: "center", width: "350px" },
-  input: { padding: "12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "16px" },
-  button: { padding: "12px", backgroundColor: "#1e293b", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "16px", fontWeight: "bold" },
-  link: { marginTop: "15px", color: "#3b82f6", cursor: "pointer", fontSize: "14px" },
-  logoutBtn: { position: 'fixed', top: '15px', right: '15px', zIndex: 9999, background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }
+  loginContainer: { 
+    display: "flex", 
+    justifyContent: "center", 
+    alignItems: "center", 
+    height: "100vh", 
+    backgroundColor: "#f0f2f5" 
+  },
+  loginBox: { 
+    padding: "40px 30px", 
+    backgroundColor: "white", 
+    borderRadius: "12px", 
+    boxShadow: "0 4px 15px rgba(0,0,0,0.1)", 
+    textAlign: "center", 
+    width: "100%", 
+    maxWidth: "400px" 
+  },
+  // ✅ FIXED: Make the title visible (Dark Color)
+  title: {
+    color: "#1e293b", 
+    marginBottom: "30px",
+    fontSize: "26px",
+    fontWeight: "bold",
+    margin: "0 0 25px 0"
+  },
+  // ✅ Gray inputs to match your image
+  input: { 
+    padding: "15px", 
+    borderRadius: "8px", 
+    border: "none", 
+    backgroundColor: "#9ca3af", // Gray background
+    color: "black",
+    fontSize: "16px",
+    outline: "none"
+  },
+  // ✅ Dark Button
+  button: { 
+    padding: "15px", 
+    backgroundColor: "#1e293b", 
+    color: "white", 
+    border: "none", 
+    borderRadius: "8px", 
+    cursor: "pointer", 
+    fontSize: "16px", 
+    fontWeight: "bold",
+    transition: "background 0.2s"
+  },
+  link: { 
+    marginTop: "20px", 
+    color: "#3b82f6", 
+    cursor: "pointer", 
+    fontSize: "14px",
+    fontWeight: "500" 
+  },
+  logoutBtn: { 
+    position: 'fixed', 
+    top: '15px', 
+    right: '15px', 
+    zIndex: 9999, 
+    background: '#ef4444', 
+    color: 'white', 
+    border: 'none', 
+    padding: '8px 16px', 
+    borderRadius: '4px', 
+    cursor: 'pointer', 
+    fontWeight: 'bold' 
+  }
 };
 
 export default App;
