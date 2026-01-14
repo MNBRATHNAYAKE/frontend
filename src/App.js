@@ -339,6 +339,7 @@ const styles = {
   },
   modalContent: {
     backgroundColor: 'white',
+    color: 'black',
     padding: '25px',
     borderRadius: '12px',
     width: '90%',
