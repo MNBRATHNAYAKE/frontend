@@ -3,6 +3,18 @@ import "./App.css";
 import UptimeChart from "./UptimeChart";
 import axios from "axios";
 
+// --- ANIMATION STYLES (Injected directly) ---
+const animationStyles = `
+  @keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animation-wrapper {
+    animation: fadeInSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    width: 100%;
+  }
+`;
+
 // --- LOGIN COMPONENT ---
 const LoginScreen = ({ onLogin }) => {
   const [email, setEmail] = useState("");
@@ -21,7 +33,8 @@ const LoginScreen = ({ onLogin }) => {
 
     try {
       const res = await axios.post(`${API_URL}${endpoint}`, payload);
-      onLogin(res.data.token, res.data.user?.id); // Pass User ID too
+      // Small delay to make the transition feel deliberate
+      setTimeout(() => onLogin(res.data.token, res.data.user?.id), 200);
     } catch (err) {
       setError(err.response?.data?.msg || "Authentication failed");
     }
@@ -29,7 +42,7 @@ const LoginScreen = ({ onLogin }) => {
 
   return (
     <div style={styles.loginContainer}>
-      <div style={styles.loginBox}>
+      <div style={styles.loginBox} className="animation-wrapper"> {/* ✅ Added Animation Class */}
         <h2 style={styles.title}>{isRegister ? "Create Admin Account" : "Admin Login"}</h2>
         {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -51,11 +64,11 @@ const LoginScreen = ({ onLogin }) => {
 // --- MAIN WEBSITE COMPONENT ---
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
-  const [currentUserId, setCurrentUserId] = useState(null); // To prevent self-delete
+  const [currentUserId, setCurrentUserId] = useState(null); 
 
   // Data States
   const [monitors, setMonitors] = useState([]);
-  const [users, setUsers] = useState([]); // ✅ List of Admins
+  const [users, setUsers] = useState([]); 
   const [subscribers, setSubscribers] = useState([]); 
 
   // UI States
@@ -66,7 +79,7 @@ function App() {
   
   // Modals
   const [showSubModal, setShowSubModal] = useState(false); 
-  const [showUserModal, setShowUserModal] = useState(false); // ✅ User Manager Modal
+  const [showUserModal, setShowUserModal] = useState(false); 
 
   const [fullscreen, setFullscreen] = useState(false);
   const [selectedMonitor, setSelectedMonitor] = useState(null);
@@ -122,7 +135,6 @@ function App() {
     } catch (err) { console.error("Fetch error:", err); }
   }, [API_URL]);
 
-  // ✅ NEW: Fetch Users (Admins)
   const fetchUsers = async () => {
     try {
         const res = await axios.get(`${API_URL}/api/users`, { headers: { 'x-auth-token': token } });
@@ -131,7 +143,6 @@ function App() {
     } catch (err) { alert("Failed to fetch users"); }
   };
 
-  // ✅ NEW: Delete User
   const deleteUser = async (id) => {
       if(!window.confirm("Permanently delete this admin?")) return;
       try {
@@ -194,110 +205,114 @@ function App() {
     return () => document.removeEventListener("fullscreenchange", handleFs);
   }, []);
 
-  if (!token) return <LoginScreen onLogin={(t, id) => { localStorage.setItem("token", t); setToken(t); setCurrentUserId(id); }} />;
-
   return (
-    <div className={`App ${fullscreen ? "fs-mode" : ""}`}>
+    <>
+      <style>{animationStyles}</style> {/* ✅ INJECT CSS ANIMATIONS */}
       
-      {/* Top Right Controls */}
-      <div style={{ position: 'fixed', top: '15px', right: '15px', zIndex: 9999, display:'flex', gap:'10px' }}>
-        <button onClick={fetchUsers} style={{...styles.logoutBtn, background: '#3b82f6', position:'static'}}>Users</button>
-        <button onClick={handleLogout} style={{...styles.logoutBtn, position:'static'}}>Logout</button>
-      </div>
+      {/* RENDER LOGIN IF NO TOKEN */}
+      {!token ? (
+        <LoginScreen onLogin={(t, id) => { localStorage.setItem("token", t); setToken(t); setCurrentUserId(id); }} />
+      ) : (
+        /* ✅ WRAPPED DASHBOARD IN ANIMATION DIV */
+        <div className={`App ${fullscreen ? "fs-mode" : ""} animation-wrapper`}>
+          
+          <div style={{ position: 'fixed', top: '15px', right: '15px', zIndex: 9999, display:'flex', gap:'10px' }}>
+            <button onClick={fetchUsers} style={{...styles.logoutBtn, background: '#3b82f6', position:'static'}}>Users</button>
+            <button onClick={handleLogout} style={{...styles.logoutBtn, position:'static'}}>Logout</button>
+          </div>
 
-      {!fullscreen && (
-        <header>
-          <div className="header-top">
-            <h1>System Status</h1>
-            <div className="live-indicator"><span className="dot"></span> Live {lastUpdated && `(${lastUpdated.toLocaleTimeString()})`}</div>
-          </div>
-          <div className="admin-panel">
-            <h3>Add New Service</h3>
-            <div className="input-row">
-              <input type="text" placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-              <input type="text" placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
-              <button className="add-btn" onClick={addMonitor}>+ Add</button>
-            </div>
-          </div>
-          <div className="controls"><button className="fs-btn" onClick={toggleFullscreen}>⛶ Fullscreen</button></div>
-          <div className="subscriber-section">
-            <div className="sub-input-group">
-              <input type="email" placeholder="Enter email for alerts" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <button className="add-btn" onClick={addSubscriber}>Subscribe</button>
-              <button className="add-btn" style={{backgroundColor: '#64748b', marginLeft:'5px'}} onClick={() => setShowSubModal(true)}>Manage ({subscribers.length})</button>
-            </div>
-            {subMessage && <span style={{display:'block', marginTop:'10px', color: '#34d399'}}>{subMessage}</span>}
-          </div>
-        </header>
-      )}
+          {!fullscreen && (
+            <header>
+              <div className="header-top">
+                <h1>System Status</h1>
+                <div className="live-indicator"><span className="dot"></span> Live {lastUpdated && `(${lastUpdated.toLocaleTimeString()})`}</div>
+              </div>
+              <div className="admin-panel">
+                <h3>Add New Service</h3>
+                <div className="input-row">
+                  <input type="text" placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                  <input type="text" placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
+                  <button className="add-btn" onClick={addMonitor}>+ Add</button>
+                </div>
+              </div>
+              <div className="controls"><button className="fs-btn" onClick={toggleFullscreen}>⛶ Fullscreen</button></div>
+              <div className="subscriber-section">
+                <div className="sub-input-group">
+                  <input type="email" placeholder="Enter email for alerts" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <button className="add-btn" onClick={addSubscriber}>Subscribe</button>
+                  <button className="add-btn" style={{backgroundColor: '#64748b', marginLeft:'5px'}} onClick={() => setShowSubModal(true)}>Manage ({subscribers.length})</button>
+                </div>
+                {subMessage && <span style={{display:'block', marginTop:'10px', color: '#34d399'}}>{subMessage}</span>}
+              </div>
+            </header>
+          )}
 
-      <div className="monitors-grid">
-        {monitors.map((m) => (
-          <div key={m._id} className={`monitor-card ${m.status}`}>
-            <button className="delete-card-btn" onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}>🗑️</button>
-            <div className="status-badge">{m.status}</div>
-            <div className="monitor-details">
-              <h3>{m.name}</h3>
-              <a href={m.url} target="_blank" rel="noreferrer" className="monitor-link">{m.url}</a>
-            </div>
-            <div className="mini-chart"> <UptimeChart history={m.history} /> </div>
-            <button className="details-btn" onClick={() => setSelectedMonitor(m)}>View Analytics</button>
+          <div className="monitors-grid">
+            {monitors.map((m) => (
+              <div key={m._id} className={`monitor-card ${m.status}`}>
+                <button className="delete-card-btn" onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}>🗑️</button>
+                <div className="status-badge">{m.status}</div>
+                <div className="monitor-details">
+                  <h3>{m.name}</h3>
+                  <a href={m.url} target="_blank" rel="noreferrer" className="monitor-link">{m.url}</a>
+                </div>
+                <div className="mini-chart"> <UptimeChart history={m.history} /> </div>
+                <button className="details-btn" onClick={() => setSelectedMonitor(m)}>View Analytics</button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {selectedMonitor && (
-        <div className="modal-overlay" onClick={() => setSelectedMonitor(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setSelectedMonitor(null)}>×</button>
-            <div className="modal-header"><h2>{selectedMonitor.name}</h2><span className={`status-pill ${selectedMonitor.status}`}>{selectedMonitor.status.toUpperCase()}</span></div>
-            <div className="chart-wrapper"> <UptimeChart history={selectedMonitor.history} detailed /> </div>
-          </div>
+          {selectedMonitor && (
+            <div className="modal-overlay" onClick={() => setSelectedMonitor(null)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button className="close-btn" onClick={() => setSelectedMonitor(null)}>×</button>
+                <div className="modal-header"><h2>{selectedMonitor.name}</h2><span className={`status-pill ${selectedMonitor.status}`}>{selectedMonitor.status.toUpperCase()}</span></div>
+                <div className="chart-wrapper"> <UptimeChart history={selectedMonitor.history} detailed /> </div>
+              </div>
+            </div>
+          )}
+
+          {showSubModal && (
+            <div className="modal-overlay" onClick={() => setShowSubModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth:'400px'}}>
+                <button className="close-btn" onClick={() => setShowSubModal(false)}>×</button>
+                <h2>Subscribers</h2>
+                <ul style={{listStyle:'none', padding:0, marginTop:'20px'}}>
+                  {subscribers.map(sub => (
+                    <li key={sub._id} style={{display:'flex', justifyContent:'space-between', padding:'10px', borderBottom:'1px solid #eee'}}>
+                      <span>{sub.email}</span>
+                      <button onClick={() => deleteSubscriber(sub.email)} style={{background:'#ef4444', color:'white', border:'none', borderRadius:'4px', padding:'5px 10px', cursor:'pointer'}}>Remove</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {showUserModal && (
+            <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth:'400px'}}>
+                <button className="close-btn" onClick={() => setShowUserModal(false)}>×</button>
+                <h2>Admin Accounts</h2>
+                <ul style={{listStyle:'none', padding:0, marginTop:'20px'}}>
+                  {users.map(user => (
+                    <li key={user._id} style={{display:'flex', justifyContent:'space-between', padding:'10px', borderBottom:'1px solid #eee', alignItems:'center'}}>
+                      <span style={{fontSize:'14px'}}>{user.email}</span>
+                      <button 
+                        onClick={() => deleteUser(user._id)} 
+                        style={{background:'#ef4444', color:'white', border:'none', borderRadius:'4px', padding:'5px 10px', cursor:'pointer'}}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       )}
-
-      {showSubModal && (
-        <div className="modal-overlay" onClick={() => setShowSubModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth:'400px'}}>
-             <button className="close-btn" onClick={() => setShowSubModal(false)}>×</button>
-             <h2>Subscribers</h2>
-             <ul style={{listStyle:'none', padding:0, marginTop:'20px'}}>
-               {subscribers.map(sub => (
-                 <li key={sub._id} style={{display:'flex', justifyContent:'space-between', padding:'10px', borderBottom:'1px solid #eee'}}>
-                   <span>{sub.email}</span>
-                   <button onClick={() => deleteSubscriber(sub.email)} style={{background:'#ef4444', color:'white', border:'none', borderRadius:'4px', padding:'5px 10px', cursor:'pointer'}}>Remove</button>
-                 </li>
-               ))}
-             </ul>
-          </div>
-        </div>
-      )}
-
-      {/* ✅ USER MANAGEMENT MODAL */}
-      {showUserModal && (
-        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth:'400px'}}>
-             <button className="close-btn" onClick={() => setShowUserModal(false)}>×</button>
-             <h2>Admin Accounts</h2>
-             <ul style={{listStyle:'none', padding:0, marginTop:'20px'}}>
-               {users.map(user => (
-                 <li key={user._id} style={{display:'flex', justifyContent:'space-between', padding:'10px', borderBottom:'1px solid #eee', alignItems:'center'}}>
-                   <span style={{fontSize:'14px'}}>{user.email}</span>
-                   {/* Don't show delete button for yourself */}
-                   <button 
-                     onClick={() => deleteUser(user._id)} 
-                     style={{background:'#ef4444', color:'white', border:'none', borderRadius:'4px', padding:'5px 10px', cursor:'pointer'}}
-                   >
-                     Remove
-                   </button>
-                 </li>
-               ))}
-             </ul>
-          </div>
-        </div>
-      )}
-
-    </div>
+    </>
   );
 }
 
