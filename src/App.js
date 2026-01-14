@@ -7,6 +7,7 @@ import axios from "axios";
 const LoginScreen = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminKey, setAdminKey] = useState(""); // ✅ NEW: State for Secret Key
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -15,8 +16,13 @@ const LoginScreen = ({ onLogin }) => {
     e.preventDefault();
     setError("");
     const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+    
+    // ✅ NEW: Send Admin Key only if registering
+    const payload = { email, password };
+    if (isRegister) payload.adminKey = adminKey;
+
     try {
-      const res = await axios.post(`${API_URL}${endpoint}`, { email, password });
+      const res = await axios.post(`${API_URL}${endpoint}`, payload);
       onLogin(res.data.token);
     } catch (err) {
       setError(err.response?.data?.msg || "Authentication failed");
@@ -26,7 +32,6 @@ const LoginScreen = ({ onLogin }) => {
   return (
     <div style={styles.loginContainer}>
       <div style={styles.loginBox}>
-        {/* ✅ FIX: Applied 'styles.title' to make text dark and visible */}
         <h2 style={styles.title}>
           {isRegister ? "Create Admin Account" : "Admin Login"}
         </h2>
@@ -34,6 +39,19 @@ const LoginScreen = ({ onLogin }) => {
         {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
         
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          
+          {/* ✅ SECRET KEY INPUT (Only shows when Registering) */}
+          {isRegister && (
+            <input 
+              type="password" 
+              placeholder="Admin Secret Key" 
+              required 
+              value={adminKey} 
+              onChange={(e) => setAdminKey(e.target.value)} 
+              style={{...styles.input, border: '2px solid #3b82f6', background: 'white'}} 
+            />
+          )}
+
           <input 
             type="email" 
             placeholder="Email" 
@@ -291,7 +309,6 @@ function App() {
   );
 }
 
-// --- UPDATED STYLES ---
 const styles = {
   loginContainer: { 
     display: "flex", 
@@ -309,7 +326,6 @@ const styles = {
     width: "100%", 
     maxWidth: "400px" 
   },
-  // ✅ FIXED: Make the title visible (Dark Color)
   title: {
     color: "#1e293b", 
     marginBottom: "30px",
@@ -317,17 +333,15 @@ const styles = {
     fontWeight: "bold",
     margin: "0 0 25px 0"
   },
-  // ✅ Gray inputs to match your image
   input: { 
     padding: "15px", 
     borderRadius: "8px", 
     border: "none", 
-    backgroundColor: "#9ca3af", // Gray background
+    backgroundColor: "#9ca3af", 
     color: "black",
     fontSize: "16px",
     outline: "none"
   },
-  // ✅ Dark Button
   button: { 
     padding: "15px", 
     backgroundColor: "#1e293b", 
