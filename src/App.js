@@ -3,7 +3,7 @@ import "./App.css";
 import UptimeChart from "./UptimeChart";
 import axios from "axios";
 
-// --- ANIMATION STYLES (Injected directly) ---
+// --- ANIMATION STYLES ---
 const animationStyles = `
   @keyframes fadeInSlide {
     from { opacity: 0; transform: translateY(20px); }
@@ -33,7 +33,6 @@ const LoginScreen = ({ onLogin }) => {
 
     try {
       const res = await axios.post(`${API_URL}${endpoint}`, payload);
-      // Small delay to make the transition feel deliberate
       setTimeout(() => onLogin(res.data.token, res.data.user?.id), 200);
     } catch (err) {
       setError(err.response?.data?.msg || "Authentication failed");
@@ -42,7 +41,7 @@ const LoginScreen = ({ onLogin }) => {
 
   return (
     <div style={styles.loginContainer}>
-      <div style={styles.loginBox} className="animation-wrapper"> {/* ✅ Added Animation Class */}
+      <div style={styles.loginBox} className="animation-wrapper">
         <h2 style={styles.title}>{isRegister ? "Create Admin Account" : "Admin Login"}</h2>
         {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -66,18 +65,15 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [currentUserId, setCurrentUserId] = useState(null); 
 
-  // Data States
   const [monitors, setMonitors] = useState([]);
   const [users, setUsers] = useState([]); 
   const [subscribers, setSubscribers] = useState([]); 
 
-  // UI States
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [email, setEmail] = useState("");
   const [subMessage, setSubMessage] = useState("");
   
-  // Modals
   const [showSubModal, setShowSubModal] = useState(false); 
   const [showUserModal, setShowUserModal] = useState(false); 
 
@@ -98,7 +94,6 @@ function App() {
     if ('Notification' in window) Notification.requestPermission().then(perm => setPermission(perm));
   }, []);
 
-  // Alert Logic
   useEffect(() => {
     if (!monitors || monitors.length === 0) return;
     monitors.forEach(monitor => {
@@ -140,7 +135,9 @@ function App() {
         const res = await axios.get(`${API_URL}/api/users`, { headers: { 'x-auth-token': token } });
         setUsers(res.data);
         setShowUserModal(true);
-    } catch (err) { alert("Failed to fetch users"); }
+    } catch (err) { 
+        alert(err.response?.data?.msg || "Failed to fetch users. You might not be the Super Admin."); 
+    }
   };
 
   const deleteUser = async (id) => {
@@ -160,7 +157,6 @@ function App() {
     }
   }, [fetchData, token]);
 
-  // Actions
   const addMonitor = async () => {
     if (!newName || !newUrl) return alert("Enter name and URL");
     let formattedUrl = newUrl;
@@ -207,64 +203,66 @@ function App() {
 
   return (
     <>
-      <style>{animationStyles}</style> {/* ✅ INJECT CSS ANIMATIONS */}
+      <style>{animationStyles}</style>
       
-      {/* RENDER LOGIN IF NO TOKEN */}
       {!token ? (
         <LoginScreen onLogin={(t, id) => { localStorage.setItem("token", t); setToken(t); setCurrentUserId(id); }} />
       ) : (
-        /* ✅ WRAPPED DASHBOARD IN ANIMATION DIV */
-        <div className={`App ${fullscreen ? "fs-mode" : ""} animation-wrapper`}>
+        <div className={`App ${fullscreen ? "fs-mode" : ""}`}>
           
           <div style={{ position: 'fixed', top: '15px', right: '15px', zIndex: 9999, display:'flex', gap:'10px' }}>
             <button onClick={fetchUsers} style={{...styles.logoutBtn, background: '#3b82f6', position:'static'}}>Users</button>
             <button onClick={handleLogout} style={{...styles.logoutBtn, position:'static'}}>Logout</button>
           </div>
 
-          {!fullscreen && (
-            <header>
-              <div className="header-top">
-                <h1>System Status</h1>
-                <div className="live-indicator"><span className="dot"></span> Live {lastUpdated && `(${lastUpdated.toLocaleTimeString()})`}</div>
-              </div>
-              <div className="admin-panel">
-                <h3>Add New Service</h3>
-                <div className="input-row">
-                  <input type="text" placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-                  <input type="text" placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
-                  <button className="add-btn" onClick={addMonitor}>+ Add</button>
-                </div>
-              </div>
-              <div className="controls"><button className="fs-btn" onClick={toggleFullscreen}>⛶ Fullscreen</button></div>
-              <div className="subscriber-section">
-                <div className="sub-input-group">
-                  <input type="email" placeholder="Enter email for alerts" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <button className="add-btn" onClick={addSubscriber}>Subscribe</button>
-                  <button className="add-btn" style={{backgroundColor: '#64748b', marginLeft:'5px'}} onClick={() => setShowSubModal(true)}>Manage ({subscribers.length})</button>
-                </div>
-                {subMessage && <span style={{display:'block', marginTop:'10px', color: '#34d399'}}>{subMessage}</span>}
-              </div>
-            </header>
-          )}
+          <div className="animation-wrapper">
+              {!fullscreen && (
+                <header>
+                  <div className="header-top">
+                    <h1>System Status</h1>
+                    <div className="live-indicator"><span className="dot"></span> Live {lastUpdated && `(${lastUpdated.toLocaleTimeString()})`}</div>
+                  </div>
+                  <div className="admin-panel">
+                    <h3>Add New Service</h3>
+                    <div className="input-row">
+                      <input type="text" placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                      <input type="text" placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
+                      <button className="add-btn" onClick={addMonitor}>+ Add</button>
+                    </div>
+                  </div>
+                  <div className="controls"><button className="fs-btn" onClick={toggleFullscreen}>⛶ Fullscreen</button></div>
+                  <div className="subscriber-section">
+                    <div className="sub-input-group">
+                      <input type="email" placeholder="Enter email for alerts" value={email} onChange={(e) => setEmail(e.target.value)} />
+                      <button className="add-btn" onClick={addSubscriber}>Subscribe</button>
+                      <button className="add-btn" style={{backgroundColor: '#64748b', marginLeft:'5px'}} onClick={() => setShowSubModal(true)}>Manage ({subscribers.length})</button>
+                    </div>
+                    {subMessage && <span style={{display:'block', marginTop:'10px', color: '#34d399'}}>{subMessage}</span>}
+                  </div>
+                </header>
+              )}
 
-          <div className="monitors-grid">
-            {monitors.map((m) => (
-              <div key={m._id} className={`monitor-card ${m.status}`}>
-                <button className="delete-card-btn" onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}>🗑️</button>
-                <div className="status-badge">{m.status}</div>
-                <div className="monitor-details">
-                  <h3>{m.name}</h3>
-                  <a href={m.url} target="_blank" rel="noreferrer" className="monitor-link">{m.url}</a>
-                </div>
-                <div className="mini-chart"> <UptimeChart history={m.history} /> </div>
-                <button className="details-btn" onClick={() => setSelectedMonitor(m)}>View Analytics</button>
+              <div className="monitors-grid">
+                {monitors.map((m) => (
+                  <div key={m._id} className={`monitor-card ${m.status}`}>
+                    <button className="delete-card-btn" onClick={(e) => { e.stopPropagation(); deleteMonitor(m._id, m.name); }}>🗑️</button>
+                    <div className="status-badge">{m.status}</div>
+                    <div className="monitor-details">
+                      <h3>{m.name}</h3>
+                      <a href={m.url} target="_blank" rel="noreferrer" className="monitor-link">{m.url}</a>
+                    </div>
+                    <div className="mini-chart"> <UptimeChart history={m.history} /> </div>
+                    <button className="details-btn" onClick={() => setSelectedMonitor(m)}>View Analytics</button>
+                  </div>
+                ))}
               </div>
-            ))}
           </div>
 
+          {/* ✅ FORCED FIXED POSITIONING FOR MODALS */}
+
           {selectedMonitor && (
-            <div className="modal-overlay" onClick={() => setSelectedMonitor(null)}>
-              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalOverlay} onClick={() => setSelectedMonitor(null)}>
+              <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <button className="close-btn" onClick={() => setSelectedMonitor(null)}>×</button>
                 <div className="modal-header"><h2>{selectedMonitor.name}</h2><span className={`status-pill ${selectedMonitor.status}`}>{selectedMonitor.status.toUpperCase()}</span></div>
                 <div className="chart-wrapper"> <UptimeChart history={selectedMonitor.history} detailed /> </div>
@@ -273,8 +271,8 @@ function App() {
           )}
 
           {showSubModal && (
-            <div className="modal-overlay" onClick={() => setShowSubModal(false)}>
-              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth:'400px'}}>
+            <div style={styles.modalOverlay} onClick={() => setShowSubModal(false)}>
+              <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <button className="close-btn" onClick={() => setShowSubModal(false)}>×</button>
                 <h2>Subscribers</h2>
                 <ul style={{listStyle:'none', padding:0, marginTop:'20px'}}>
@@ -290,8 +288,8 @@ function App() {
           )}
 
           {showUserModal && (
-            <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
-              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth:'400px'}}>
+            <div style={styles.modalOverlay} onClick={() => setShowUserModal(false)}>
+              <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <button className="close-btn" onClick={() => setShowUserModal(false)}>×</button>
                 <h2>Admin Accounts</h2>
                 <ul style={{listStyle:'none', padding:0, marginTop:'20px'}}>
@@ -316,6 +314,7 @@ function App() {
   );
 }
 
+// ✅ UPDATED STYLES
 const styles = {
   loginContainer: { display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#f0f2f5" },
   loginBox: { padding: "40px 30px", backgroundColor: "white", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0,0,0,0.1)", textAlign: "center", width: "100%", maxWidth: "400px" },
@@ -323,7 +322,32 @@ const styles = {
   input: { padding: "15px", borderRadius: "8px", border: "none", backgroundColor: "#9ca3af", color: "black", fontSize: "16px", outline: "none" },
   button: { padding: "15px", backgroundColor: "#1e293b", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "16px", fontWeight: "bold", transition: "background 0.2s" },
   link: { marginTop: "20px", color: "#3b82f6", cursor: "pointer", fontSize: "14px", fontWeight: "500" },
-  logoutBtn: { background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }
+  logoutBtn: { background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
+  
+  // ✅ NEW FIXED MODAL STYLES (Overrides everything else)
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100000 // Always on top
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '12px',
+    width: '90%',
+    maxWidth: '450px',
+    maxHeight: '85vh',
+    overflowY: 'auto',
+    position: 'relative',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+  }
 };
 
 export default App;
