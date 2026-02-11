@@ -107,7 +107,7 @@ function App() {
   }, [monitors]);
 
   const triggerAlert = (siteName, type) => {
-    const soundFile = type === 'down' ? 'https://assets.mixkit.co/active_storage/sfx/2867/2867-preview.mp3' : 'https://www.soundjay.com/buttons/button-09.mp3';
+    const soundFile = type === 'down' ? 'https://assets.mixkit.co/active_storage/sfx/2867/2867-preview.mp3'  ;
     const audio = new Audio(soundFile);
     audio.play().catch(e => console.log("Audio blocked"));
     if (permission === 'granted') {
